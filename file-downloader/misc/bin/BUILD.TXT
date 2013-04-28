@@ -1,0 +1,64 @@
+BUILD INSTRUCTIONS
+------------------
+
+The build instructions assumes that a recent version of Apache Ant
+(http://ant.apache.org/) is already installed and properly configured on your
+system. If build errors occur, you may need to download and install the latest
+version of Apache Ant.
+
+If "ant" is already in your PATH environment variable, all you need to build
+this Java package is to execute the following command from the directory
+containing the "build.xml" file:
+    ant
+
+By default, the "ant" command executes the "build" task followed by the "dist"
+task. The "build" task compiles the Java sources into a .jar file, copies any
+other requisite .jar files over, and generate the Javadocs, with all output
+files placed in a subdirectory named "build". The "dist" task generates both the
+binary and source distributions as .zip files, placed under the subdirectory
+"dist".
+
+The Apache Ant build file "build.xml" is designed to be self-replicating, in the
+sense that a source distribution builds an exact replica of itself.
+
+
+DIRECTORY STRUCTURE
+-------------------
+
+To facilitate the self-replication of the source distribution, the directory
+containing "build.xml" must contain the following subdirectories:
+- src: The source code for this package.
+- lib: The .jar files required by this package.
+- res: The files that are to be copied into the .jar file of this package. These
+  may include model files that need to be loaded when executing this package.
+- misc/bin: The files that are to be copied into the binary distribution. These
+  may include usage instructions.
+- misc/src: The files that are to be copied into the source distribution. These
+  may include build instructions.
+All of the above subdirectories must exist, but some of them can be empty.
+
+Upon executing the "build" task, a "build" subdirectory will be created and the
+following events will occur:
+ 1. The source code under "src" will be compiled to "build/classes".
+ 2. The files under "res" will be copied to "build/classes".
+ 3. The files under "build/classes" will be archived into a .jar file under
+    "build".
+ 4. The files under "lib" will be copied to "build".
+ 5. The Javadocs will be generated under "build/doc" from the source code.
+
+Upon executing the "dist" task, a "dist" subdirectory will be created and the
+following events will occur:
+ 1. The .jar files under "build" will be copied to "dist/bin/[package name]".
+ 2. The "build/doc" directory will be copied to "dist/bin/[package name]".
+ 3. The files under "misc/bin" will be copied to "dist/bin/[package name]".
+ 4. The directory "dist/bin/[package name]" will be archived into a binary
+    distribution .zip file under "dist".
+ 5. The "src" directory will be copied to "dist/src/[package name]".
+ 6. The "res" directory will be copied to "dist/src/[package name]".
+ 7. The "lib" directory will be copied to "dist/src/[package name]".
+ 8. The "misc" directory will be copied to "dist/src/[package name]".
+ 9. The files under "misc/src" will be copied to "dist/src/[package name]".
+10. The directory "dist/src/[package name]" will be archived into a source
+    distribution .zip file under "dist".
+
+

@@ -1,0 +1,163 @@
+<project default="all">
+  <property name="project" value="charset-detect-stream-reader" />
+  <property name="title" value="Charset Detect Stream Reader" />
+  <property name="date" value="20130423" />
+  <property name="version" value="${date}" />
+  <property name="main-class" value="" />
+  <property name="class-path" value="icu4j.jar" />
+  <property name="ant-version" value="1.7" />
+
+  <property name="date.pattern" value="yyyyMMdd" />
+  <property name="src" location="src" />
+  <property name="res" location="res" />
+  <property name="lib" location="lib" />
+  <property name="misc" location="misc" />
+  <property name="misc.bin" location="${misc}/bin" />
+  <property name="misc.src" location="${misc}/src" />
+  <property name="build" location="build" />
+  <property name="build.classes" location="${build}/classes" />
+  <property name="build.doc" location="${build}/doc" />
+  <property name="dist" location="dist" />
+  <property name="dist.bin" location="${dist}/bin" />
+  <property name="dist.bin.version" location="${dist.bin}/${project}-${version}" />
+  <property name="dist.bin.version.doc" location="${dist.bin.version}/doc" />
+  <property name="dist.bin.zip" location="${dist}/${project}-${version}.zip" />
+  <property name="dist.src" location="${dist}/src" />
+  <property name="dist.src.version" location="${dist.src}/${project}-${version}" />
+  <property name="dist.src.version.src" location="${dist.src.version}/src" />
+  <property name="dist.src.version.res" location="${dist.src.version}/res" />
+  <property name="dist.src.version.lib" location="${dist.src.version}/lib" />
+  <property name="dist.src.version.misc" location="${dist.src.version}/misc" />
+  <property name="dist.src.zip" location="${dist}/${project}-${version}-src.zip" />
+
+  <fail message="Ant version ${ant-version} or later is required.">
+    <condition>
+      <not>
+        <antversion atleast="${ant-version}" />
+      </not>
+    </condition>
+  </fail>
+
+  <target name="build" depends="clean.build,-build.classes,-build.jar,-build.doc">
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${build}" />
+    </touch>
+  </target>
+  <target name="-build.classes">
+    <mkdir dir="${build.classes}" />
+    <javac srcdir="${src}" destdir="${build.classes}" includeantruntime="false" debug="on">
+      <classpath>
+        <fileset dir="${lib}">
+          <include name="**/*.jar" />
+        </fileset>
+      </classpath>
+    </javac>
+    <copy todir="${build.classes}">
+      <fileset dir="${res}" />
+    </copy>
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${build.classes}" />
+    </touch>
+  </target>
+  <target name="-build.jar" depends="-build.classes">
+    <jar destfile="${build}/${project}.jar" basedir="${build.classes}">
+      <manifest>
+        <attribute name="Main-Class" value="${main-class}" />
+        <attribute name="Class-Path" value="${class-path}" />
+      </manifest>
+    </jar>
+    <copy todir="${build}">
+      <fileset dir="${lib}" />
+    </copy>
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${build}">
+        <include name="**/*.jar" />
+      </fileset>
+    </touch>
+  </target>
+  <target name="-build.doc">
+    <javadoc destdir="${build.doc}" use="true" windowtitle="${title}">
+      <sourcefiles>
+        <fileset dir="${src}">
+          <include name="**/*.java" />
+        </fileset>
+      </sourcefiles>
+      <classpath>
+        <fileset dir="${lib}">
+          <include name="**/*.jar" />
+        </fileset>
+      </classpath>
+    </javadoc>
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${build.doc}" />
+    </touch>
+  </target>
+
+  <target name="dist" depends="clean.dist,-dist.bin,-dist.src">
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${dist}" />
+    </touch>
+  </target>
+  <target name="-dist.bin" depends="-dist.bin.version">
+    <zip destfile="${dist.bin.zip}" basedir="${dist.bin}" />
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${dist.bin}" />
+    </touch>
+  </target>
+  <target name="-dist.bin.version" depends="build">
+    <mkdir dir="${dist.bin.version}" />
+    <copy todir="${dist.bin.version}">
+      <fileset dir="${build}">
+        <include name="**/*.jar" />
+      </fileset>
+    </copy>
+    <copy todir="${dist.bin.version.doc}">
+      <fileset dir="${build.doc}" />
+    </copy>
+    <copy todir="${dist.bin.version}">
+      <fileset dir="${misc.bin}" />
+    </copy>
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${dist.bin.version}" />
+    </touch>
+  </target>
+  <target name="-dist.src" depends="-dist.src.version">
+    <zip destfile="${dist.src.zip}" basedir="${dist.src}" />
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${dist.src}" />
+    </touch>
+  </target>
+  <target name="-dist.src.version">
+    <mkdir dir="${dist.src.version}" />
+    <copy todir="${dist.src.version.src}">
+      <fileset dir="${src}" />
+    </copy>
+    <copy todir="${dist.src.version.res}">
+      <fileset dir="${res}" />
+    </copy>
+    <copy todir="${dist.src.version.lib}">
+      <fileset dir="${lib}" />
+    </copy>
+    <copy todir="${dist.src.version.misc}">
+      <fileset dir="${misc}" />
+    </copy>
+    <copy todir="${dist.src.version}">
+      <fileset dir="${misc.src}" />
+    </copy>
+    <copy file="build.xml" todir="${dist.src.version}" />
+    <touch datetime="${date}" pattern="${date.pattern}">
+      <fileset dir="${dist.src.version}" />
+    </touch>
+  </target>
+
+  <target name="all" depends="build,dist" />
+
+  <target name="clean" depends="clean.build,clean.dist" />
+  <target name="clean.build">
+    <delete dir="${build}" />
+  </target>
+  <target name="clean.dist">
+    <delete dir="${dist}" />
+  </target>
+</project>
+

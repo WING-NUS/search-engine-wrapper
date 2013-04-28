@@ -1,0 +1,71 @@
+SEARCH ENGINE WRAPPER
+Tan Yee Fan
+
+
+IMPORTANT NOTICES
+-----------------
+
+1. Changes to API related to search engine clients
+
+As of the releases of 2013 April 23, the design of the search engine client
+classes and its associated classes have been redesigned. The changes are
+necessary to better support Twitter-style search engine APIs. As a result, a
+set of backwards incompatible changes were introduced in the API related to the
+search engine clients. However, the API for using the search engine wrapper is
+unaffected.
+
+2. Changes to search engine wrapper behaviour and search engine results output
+   XML file format.
+
+From the releases of 2010 March 30 and onwards, the search engine wrapper
+attempts to detect fatal errors returned by search engines, where queries
+should not be retried. Instead, the output XML file now contains a new element
+<fatalerror>, which indicates whether a fatal error has occurred.
+
+3. Other changes to search engine results output XML file format
+
+Starting from the release of 2009 September 30, the format of the search engine
+results output XML file changed in two ways. Firstly, the search engine wrapper
+now combines multiple SearchEngineResults objects belonging to the same query
+but differing start index into one single SearchEngineResults object, and
+hence the XML file will contain only one <results> element for each query in the
+input file as opposed to having multiple <results> element for each query as
+previously done. Secondly, the search engine wrapper now outputs XML files that
+are actually well-formed, and hence accepted by XML parsers. This is done
+through two new classes ResultsXMLReader and ResultsXMLWriter, and backwards
+compatibility is maintained with the legacy SearchEngineResultsXML class such
+that the output of SearchEngineResultsXML is readable by ResultsXMLReader and
+the output of ResultsXMLWriter is readable by SearchEngineResultsXML. Note that
+the legacy SearchEngineResultsXML class is now deprecated.
+
+Starting from the release of 2009 June 9, the search engine results output XML
+file will be saved using the UTF-8 character encoding. Releases prior to 2009
+June 9 have saved the XML file using the platform default encoding. While
+releases of 2009 June 9 and later will be able to read XML files saved by
+earlier releases without loss of information, earlier releases may not be able
+to correctly read XML files saved by releases of 2009 June 9 and later if the
+platform default encoding is not UTF-8 and the XML files contain characters
+outside the ASCII character set.
+
+
+POTENTIAL ISSUES WHEN USING THE SEARCH ENGINE WRAPPER
+-----------------------------------------------------
+
+1. Repeated failures with key rotation
+
+If there is more than one key, then these keys will be rotated when there is
+repeated failures during querying, and the program will only terminate when all
+queries have successfully returned results. Users running this program in the
+background are advised to periodically check the standard output and error
+output in case the failure is not caused by transient downtime such as temporary
+server issues or daily quota exceeded for a key.
+
+
+DETERMINING THE SEARCH ENGINE WRAPPER VERSION
+---------------------------------------------
+
+To determine the release of the search engine wrapper, see the VERSION.TXT file
+that came with the distribution. If the VERSION.TXT file cannot be found, then
+it is most likely that you have a release earlier than 2009 June 9.
+
+
