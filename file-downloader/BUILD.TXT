@@ -31,34 +31,33 @@ containing "build.xml" must contain the following subdirectories:
 - lib: The .jar files required by this package.
 - res: The files that are to be copied into the .jar file of this package. These
   may include model files that need to be loaded when executing this package.
-- misc/bin: The files that are to be copied into the binary distribution. These
-  may include usage instructions.
-- misc/src: The files that are to be copied into the source distribution. These
-  may include build instructions.
-All of the above subdirectories must exist, but some of them can be empty.
+If any of the above directories does not exist, it will be created when the
+"build" task is executed.
 
-Upon executing the "build" task, a "build" subdirectory will be created and the
-following events will occur:
- 1. The source code under "src" will be compiled to "build/classes".
- 2. The files under "res" will be copied to "build/classes".
- 3. The files under "build/classes" will be archived into a .jar file under
-    "build".
- 4. The files under "lib" will be copied to "build".
- 5. The Javadocs will be generated under "build/doc" from the source code.
+Upon executing the "build" task, a "build" subdirectory is created and the
+following actions take place:
+ 1. The source code under "src" is compiled to "build/classes".
+ 2. The files under "res" is copied to "build/classes".
+ 3. The files under "build/classes" is archived into a .jar file under "build".
+ 4. The files under "lib" is copied to "build".
+ 5. The Javadocs is generated under "build/doc" from the source code.
 
-Upon executing the "dist" task, a "dist" subdirectory will be created and the
-following events will occur:
- 1. The .jar files under "build" will be copied to "dist/bin/[package name]".
- 2. The "build/doc" directory will be copied to "dist/bin/[package name]".
- 3. The files under "misc/bin" will be copied to "dist/bin/[package name]".
- 4. The directory "dist/bin/[package name]" will be archived into a binary
+Upon executing the "dist" task, a "dist" subdirectory is created and the
+following actions take place:
+ 1. The .jar files under "build" is copied to "dist/bin/[package name]".
+ 2. The "build/doc" directory is copied to "dist/bin/[package name]".
+ 3. The files specified in the "dist-copy-bin" property in "build.xml" is copied
+    to "dist/bin/[package name]".
+ 4. The file "VERSION.TXT" is written to "dist/bin/[package name]".
+ 5. The directory "dist/bin/[package name]" is archived into a binary
     distribution .zip file under "dist".
- 5. The "src" directory will be copied to "dist/src/[package name]".
- 6. The "res" directory will be copied to "dist/src/[package name]".
- 7. The "lib" directory will be copied to "dist/src/[package name]".
- 8. The "misc" directory will be copied to "dist/src/[package name]".
- 9. The files under "misc/src" will be copied to "dist/src/[package name]".
-10. The directory "dist/src/[package name]" will be archived into a source
+ 6. The "src" directory is copied to "dist/src/[package name]".
+ 7. The "res" directory is copied to "dist/src/[package name]".
+ 8. The "lib" directory is copied to "dist/src/[package name]".
+ 9. The files specified in the "dist-copy-src" property in "build.xml" is copied
+    to "dist/src/[package name]".
+10. The file "VERSION.TXT" is written to "dist/src/[package name]".
+11. The directory "dist/src/[package name]" is archived into a source
     distribution .zip file under "dist".
 
 
