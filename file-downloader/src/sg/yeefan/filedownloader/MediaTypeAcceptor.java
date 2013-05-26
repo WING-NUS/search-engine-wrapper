@@ -20,14 +20,14 @@ package sg.yeefan.filedownloader;
 
 /**
  * Interface for determining whether to accept a file download for a particular
- * media type, such as "text/html".
+ * media type, such as {@code "text/html"}.
  *
  * @author Tan Yee Fan
  */
 public interface MediaTypeAcceptor {
 	/** 
 	 * Determines whether to accept a particular media type. Note that the
-	 * input media type string can be <code>null</code>.
+	 * input media type string can be {@code null}.
 	 */
 	public boolean accept(String mediaType);
 }

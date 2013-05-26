@@ -42,7 +42,7 @@ import java.net.URLConnection;
  *     long size = downloader.download(url, filename);
  * </pre>
  * It is possible to repeatedly call the {@link #download download} method on
- * the same <code>FileDownloader</code> instance to download multiple files.
+ * the same {@code FileDownloader} instance to download multiple files.
  * <p>
  * HTTP basic authentication is supported. To trigger the authentication, both
  * the username and the password must be set to non-null values.
@@ -61,6 +61,9 @@ import java.net.URLConnection;
 public class FileDownloader {
 	/** HTTP request property map. */
 	private Map<String, String> requestPropertyMap;
+
+	/** HTTP user agent string. */
+	private String userAgent;
 
 	/** HTTP basic authentication username. */
 	private String username;
@@ -83,10 +86,16 @@ public class FileDownloader {
 	/** Whether flushing is enabled after each read. */
 	private boolean flush;
 
+	/** Download progress handler. */
+	private ProgressHandler progressHandler;
+
+	/** Connection handler. */
+	private ConnectionHandler connectionHandler;
+
 	/** Connection opened by the last call to
 	    {@link #download(String, String)} or
 	    {@link #getURLInputStream(String)}. */
-	private URLConnection conn;
+	private URLConnection connection;
 
 	/** HTTP response code of the connection opened by the last call to
 	    {@link #download(String, String)} or
@@ -97,6 +106,11 @@ public class FileDownloader {
 	    {@link #download(String, String)} or
 	    {@link #getURLInputStream(String)}. */
 	private String responseMessage;
+
+	/** Content length of the connection opened by the last call to
+	    {@link #download(String, String)} or
+	    {@link #getURLInputStream(String)}. */
+	private int contentLength;
 
 	/** Media type of the connection opened by the last call to
 	    {@link #download(String, String)} or
@@ -113,6 +127,7 @@ public class FileDownloader {
 	 */
 	public FileDownloader() {
 		this.requestPropertyMap = new TreeMap<String, String>();
+		this.userAgent = null;
 		this.username = null;
 		this.password = null;
 		this.urlConnectionTimeout = 10000;
@@ -120,9 +135,13 @@ public class FileDownloader {
 		this.mediaTypeAcceptor = null;
 		this.bufferSize = 4096;
 		this.flush = false;
+		this.progressHandler = null;
+		this.connection = null;
 		this.responseCode = 0;
 		this.responseMessage = null;
+		this.contentLength = -1;
 		this.mediaType = null;
+		this.charset = null;
 	}
 
 	/**
@@ -137,6 +156,20 @@ public class FileDownloader {
 	 */
 	public void setRequestProperty(String property, String value) {
 		this.requestPropertyMap.put(property, value);
+	}
+
+	/**
+	 * Returns the HTTP user agent string.
+	 */
+	public String getUserAgent() {
+		return this.userAgent;
+	}
+
+	/**
+	 * Sets the HTTP user agent string.
+	 */
+	public void setUserAgent(String userAgent) {
+		this.userAgent = userAgent;
 	}
 
 	/**
@@ -224,24 +257,66 @@ public class FileDownloader {
 	}
 
 	/**
-	 * Returns whether flushing is enabled after each read.
+	 * Returns whether the output stream is to be flushed each time some
+	 * data is copied from the input stream.
 	 */
 	public boolean getFlush() {
 		return this.flush;
 	}
 
 	/**
-	 * Sets whether flushing is enabled after each read.
+	 * Sets whether the output stream is to be flushed each time some data
+	 * is copied from the input stream.
 	 */
 	public void setFlush(boolean flush) {
 		this.flush = flush;
 	}
 
 	/**
+	 * Returns the download progress handler.
+	 */
+	public ProgressHandler getProgressHandler() {
+		return this.progressHandler;
+	}
+
+	/**
+	 * Sets the download progress handler.
+	 */
+	public void setProgressHandler(ProgressHandler progressHandler) {
+		this.progressHandler = progressHandler;
+	}
+
+	/**
+	 * Returns the connection handler. This method is intended for advanced
+	 * use only, see the documentation for
+	 * {@linkplain ConnectionHandler connection handler} for more
+	 * information.
+	 * <p>
+	 * <strong>Support of this method in the file downloader API is
+	 * experimental. It may change in the future.</strong>
+	 */
+	public ConnectionHandler getConnectionHandler() {
+		return this.connectionHandler;
+	}
+
+	/**
+	 * Sets the connection handler. This method is intended for advanced
+	 * use only, see the documentation for
+	 * {@linkplain ConnectionHandler connection handler} for more
+	 * information.
+	 * <p>
+	 * <strong>Support of this method in the file downloader API is
+	 * experimental. It may change in the future.</strong>
+	 */
+	public void setConnectionHandler(ConnectionHandler connectionHandler) {
+		this.connectionHandler = connectionHandler;
+	}
+
+	/**
 	 * Returns the HTTP response code of the connection opened by the last
 	 * call to {@link #download(String, String)} or
 	 * {@link #getURLInputStream(String)}. When no HTTP response code is
-	 * available, the value <code>0</code> is returned.
+	 * available, the value {@code 0} is returned.
 	 */
 	public int getResponseCode() {
 		return this.responseCode;
@@ -251,17 +326,27 @@ public class FileDownloader {
 	 * Returns the HTTP response message of the connection opened by the
 	 * last call to {@link #download(String, String)} or
 	 * {@link #getURLInputStream(String)}. When no HTTP response code is
-	 * available, the value <code>null</code> is returned.
+	 * available, the value {@code null} is returned.
 	 */
 	public String getResponseMessage() {
 		return this.responseMessage;
 	}
 
 	/**
+	 * Returns the content length of the connection opened by the last call
+	 * to {@link #download(String, String)} or
+	 * {@link #getURLInputStream(String)}. When no content length is
+	 * available, the value {@code -1} is returned.
+	 */
+	public int getContentLength() {
+		return this.contentLength;
+	}
+
+	/**
 	 * Returns the media type of the connection opened by the last call to
 	 * {@link #download(String, String)} or
 	 * {@link #getURLInputStream(String)}. The returned string can be
-	 * <code>null</code>.
+	 * {@code null}.
 	 */
 	public String getMediaType() {
 		return this.mediaType;
@@ -271,7 +356,7 @@ public class FileDownloader {
 	 * Returns the character encoding of the connection opened by the last
 	 * call to {@link #download(String, String)} or
 	 * {@link #getURLInputStream(String)}. The returned string can be
-	 * <code>null</code>.
+	 * {@code null}.
 	 */
 	public String getCharset() {
 		return this.charset;
@@ -281,12 +366,12 @@ public class FileDownloader {
 	 * Returns the error stream of the connection opened by the last call to
 	 * {@link #download(String, String)} or
 	 * {@link #getURLInputStream(String)}. The returned stream can be
-	 * <code>null</code>.
+	 * {@code null}.
 	 */
 	public InputStream getErrorStream() {
 		InputStream es = null;
-		if (this.conn instanceof HttpURLConnection) {
-			HttpURLConnection http = (HttpURLConnection)this.conn;
+		if (this.connection instanceof HttpURLConnection) {
+			HttpURLConnection http = (HttpURLConnection)this.connection;
 			es = http.getErrorStream();
 		}
 		return es;
@@ -306,7 +391,7 @@ public class FileDownloader {
 	 *         establishing the connection. 
 	 */
 	public InputStream getURLInputStream(String url) throws FileDownloaderException {
-		this.conn = null;
+		this.connection = null;
 		this.responseCode = 0;
 		this.responseMessage = null;
 		this.mediaType = null;
@@ -318,21 +403,45 @@ public class FileDownloader {
 		catch (MalformedURLException e) {	
 			throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_URL_INVALID, e);
 		}
-		URLConnection conn;
+		URLConnection connection;
 		try {
-			conn = u.openConnection();
-			conn.setConnectTimeout(this.urlConnectionTimeout);
-			conn.setReadTimeout(this.urlReadTimeout);
+			connection = u.openConnection();
+			connection.setConnectTimeout(this.urlConnectionTimeout);
+			connection.setReadTimeout(this.urlReadTimeout);
 			for (Map.Entry<String, String> entry: this.requestPropertyMap.entrySet()) {
 				String property = entry.getKey();
 				String value = entry.getValue();
-				conn.setRequestProperty(property, value);
+				connection.setRequestProperty(property, value);
+			}
+			if (this.userAgent != null) {
+				connection.setRequestProperty("User-Agent", this.userAgent);
 			}
 			if (this.username != null && this.password != null) {
 				String encoded = encode(this.username + ":" + this.password);
-				conn.setRequestProperty("Authorization", "Basic " + encoded);
+				connection.setRequestProperty("Authorization", "Basic " + encoded);
 			}
-			conn.connect();
+			// Force a connection by calling
+			// connection.getContentLength() here.
+			IOException exception = null;
+			if (this.connectionHandler != null) {
+				boolean proceed = this.connectionHandler.beforeConnect(this, connection);
+				if (!proceed)
+					throw new FileDownloaderException(FileDownloaderException.Reason.DOWNLOAD_ABORTED);
+			}
+			try {
+				connection.connect();
+				connection.getContentLength();
+			}
+			catch (IOException e) {
+				exception = e;
+			}
+			if (this.connectionHandler != null) {
+				boolean proceed = this.connectionHandler.afterConnect(this, connection);
+				if (!proceed)
+					throw new FileDownloaderException(FileDownloaderException.Reason.DOWNLOAD_ABORTED);
+			}
+			if (exception != null)
+				throw exception;
 		}
 		catch (SocketTimeoutException e) {
 			throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_OPEN_TIMEOUT, e);
@@ -340,10 +449,10 @@ public class FileDownloader {
 		catch (IOException e) {
 			throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_OPEN_ERROR, e);
 		}
-		this.conn = conn;
+		this.connection = connection;
 		// Process the HTTP response code.
-		if (conn instanceof HttpURLConnection) {
-			HttpURLConnection http = (HttpURLConnection)conn;
+		if (connection instanceof HttpURLConnection) {
+			HttpURLConnection http = (HttpURLConnection)connection;
 			try {
 				int responseCode = http.getResponseCode();
 				String responseMessage = http.getResponseMessage();
@@ -359,10 +468,12 @@ public class FileDownloader {
 				throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_OPEN_ERROR, e);
 			}
 		}
+		// Process the content length.
+		this.contentLength = connection.getContentLength();
 		// Process the content type.
 		String contentType;
 		try {
-			contentType = conn.getContentType();
+			contentType = connection.getContentType();
 		}
 		catch (NullPointerException e) {
 			throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_OPEN_ERROR, e);
@@ -393,7 +504,7 @@ public class FileDownloader {
 		// Obtain the input stream.
 		InputStream is = null;
 		try {
-			is = conn.getInputStream();
+			is = connection.getInputStream();
 		}
 		catch (SocketTimeoutException e) {
 			throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_CONNECTION_OPEN_TIMEOUT, e);
@@ -423,7 +534,7 @@ public class FileDownloader {
 
 	/**
 	 * Closes the given input stream. If the input stream is
-	 * <code>null</code>, no action is taken.
+	 * {@code null}, no action is taken.
 	 *
 	 * @throws FileDownloaderException If an error occurred when closing
 	 *         the stream.
@@ -441,7 +552,7 @@ public class FileDownloader {
 
 	/**
 	 * Closes the given output stream. If the output stream is
-	 * <code>null</code>, no action is taken.
+	 * {@code null}, no action is taken.
 	 *
 	 * @throws FileDownloaderException If an error occurred when closing
 	 *         the stream.
@@ -459,55 +570,83 @@ public class FileDownloader {
 
 	/**
 	 * Copies bytes from an input stream to an output stream until the end
-	 * of input stream is encountered.
+	 * of input stream is encountered. This method does not close either the
+	 * input stream or the output stream.
 	 *
 	 * @return The number of bytes copied.
 	 * @throws FileDownloaderException If an error occurred during the
-	 *         copying. 
+	 *         copying.
 	 */
 	public long copyBytes(InputStream is, OutputStream os) throws FileDownloaderException {
-		if (!(is instanceof BufferedInputStream))
-			is = new BufferedInputStream(is, this.bufferSize);
-		if (!(os instanceof BufferedOutputStream))
-			os = new BufferedOutputStream(os, this.bufferSize);
-		byte[] buf = new byte[this.bufferSize];
+		FileDownloaderException exception = null;
 		long numBytesCopied = 0;
-		while (true) {
-			int numBytes;
-			try {
-				numBytes = is.read(buf);
+		try {
+			if (this.progressHandler != null) {
+				boolean proceed = this.progressHandler.start(this);
+				if (!proceed)
+					throw new FileDownloaderException(FileDownloaderException.Reason.DOWNLOAD_ABORTED);
 			}
-			catch (SocketTimeoutException e) {
-				throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_STREAM_READ_TIMEOUT, e);
+			if (!(is instanceof BufferedInputStream))
+				is = new BufferedInputStream(is, this.bufferSize);
+			if (!(os instanceof BufferedOutputStream))
+				os = new BufferedOutputStream(os, this.bufferSize);
+			byte[] buf = new byte[this.bufferSize];
+			if (this.progressHandler != null) {
+				boolean proceed = this.progressHandler.progress(this, numBytesCopied);
+				if (!proceed)
+					throw new FileDownloaderException(FileDownloaderException.Reason.DOWNLOAD_ABORTED);
 			}
-			catch (IOException e) {
-				throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_STREAM_READ_ERROR, e);
+			while (true) {
+				int numBytes;
+				try {
+					numBytes = is.read(buf);
+				}
+				catch (SocketTimeoutException e) {
+					throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_STREAM_READ_TIMEOUT, e);
+				}
+				catch (IOException e) {
+					throw new FileDownloaderException(FileDownloaderException.Reason.INPUT_STREAM_READ_ERROR, e);
+				}
+				if (numBytes < 0)
+					break;
+				if (numBytes == 0)
+					continue;
+				try {
+					os.write(buf, 0, numBytes);
+					if (this.flush)
+						os.flush();
+				}
+				catch (SocketTimeoutException e) {
+					throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_TIMEOUT, e);
+				}
+				catch (IOException e) {
+					throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_ERROR, e);
+				}
+				numBytesCopied += numBytes;
+				if (this.progressHandler != null) {
+					boolean proceed = this.progressHandler.progress(this, numBytesCopied);
+					if (!proceed)
+						throw new FileDownloaderException(FileDownloaderException.Reason.DOWNLOAD_ABORTED);
+				}
 			}
-			if (numBytes < 0)
-				break;
-			if (numBytes == 0)
-				continue;
-			try {
-				os.write(buf, 0, numBytes);
-				if (this.flush)
+			if (!this.flush) {
+				try {
 					os.flush();
-			}
-			catch (SocketTimeoutException e) {
-				throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_TIMEOUT, e);
-			}
-			catch (IOException e) {
-				throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_ERROR, e);
-			}
-			numBytesCopied += numBytes;
-		}
-		if (!this.flush) {
-			try {
-				os.flush();
-			}
-			catch (IOException e) {
-				throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_ERROR, e);
+				}
+				catch (IOException e) {
+					throw new FileDownloaderException(FileDownloaderException.Reason.OUTPUT_STREAM_WRITE_ERROR, e);
+				}
 			}
 		}
+		catch (FileDownloaderException e) {
+			exception = e;
+		}
+		if (this.progressHandler != null) {
+			boolean complete = (exception == null);
+			this.progressHandler.stop(this, complete);
+		}
+		if (exception != null)
+			throw exception;
 		return numBytesCopied;
 	}
 
@@ -553,7 +692,6 @@ public class FileDownloader {
 	public byte[] download(String url) throws FileDownloaderException {
 		InputStream is = null;
 		ByteArrayOutputStream os = new ByteArrayOutputStream(4096);
-		long size;
 		try {
 			is = getURLInputStream(url);
 			copyBytes(is, os);

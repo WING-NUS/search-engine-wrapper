@@ -52,7 +52,9 @@ public class FileDownloaderException extends Exception {
 		/** Output stream write error. */
 		OUTPUT_STREAM_WRITE_ERROR("output stream write error"),
 		/** Output stream close error. */
-		OUTPUT_STREAM_CLOSE_ERROR("output stream close error");
+		OUTPUT_STREAM_CLOSE_ERROR("output stream close error"),
+		/** Download aborted by handler. */
+		DOWNLOAD_ABORTED("download aborted");
 
 		/** The reason string. */
 		private String string;
@@ -74,6 +76,7 @@ public class FileDownloaderException extends Exception {
 		/**
 		 * Returns the reason string.
 		 */
+		@Override
 		public String toString() {
 			return this.string;
 		}

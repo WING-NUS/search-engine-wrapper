@@ -22,8 +22,9 @@ import java.util.regex.Pattern;
 
 /**
  * A simple media type acceptor, which accepts a given media type string if it
- * matches one or more patterns. Possible patterns include "application/pdf" and
- * "text/*". This acceptor accepts the <code>null</code> media type string.
+ * matches one or more patterns. Possible patterns include
+ * {@code "application/pdf"} and {@code "text/*"}. This acceptor accepts the
+ * {@code null} media type string.
  *
  * @author Tan Yee Fan
  */
@@ -46,8 +47,8 @@ public class SimpleMediaTypeAcceptor implements MediaTypeAcceptor {
 		this.patterns = new Pattern[numPatterns];
 		for (int i = 0; i < numPatterns; i++) {
 			String pattern = patterns[i];
-			StringBuffer buffer = new StringBuffer();
-			buffer.append('^');
+			StringBuilder builder = new StringBuilder();
+			builder.append('^');
 			for (int j = 0; j < pattern.length(); j++) {
 				char c = pattern.charAt(j);
 				switch (c) {
@@ -62,19 +63,19 @@ public class SimpleMediaTypeAcceptor implements MediaTypeAcceptor {
 					case '|':
 					case '^':
 					case '$':
-						buffer.append("\\");
-						buffer.append(c);
+						builder.append("\\");
+						builder.append(c);
 						break;
 					case '*':
-						buffer.append("[^/]+");
+						builder.append("[^/]+");
 						break;
 					default:
-						buffer.append(c);
+						builder.append(c);
 						break;
 				}
 			}
-			buffer.append('$');
-			String regex = buffer.toString();
+			builder.append('$');
+			String regex = builder.toString();
 			this.patterns[i] = Pattern.compile(regex);
 		}
 	}
@@ -82,7 +83,7 @@ public class SimpleMediaTypeAcceptor implements MediaTypeAcceptor {
 	/** 
 	 * Determines whether to accept a particular media type. The media type
 	 * string is accepted if it matches a pattern or it is
-	 * <code>null</code>.
+	 * {@code null}.
 	 */
 	@Override
 	public boolean accept(String mediaType) {
