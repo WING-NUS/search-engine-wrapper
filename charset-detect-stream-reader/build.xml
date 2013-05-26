@@ -3,7 +3,7 @@
   <property name="title" value="Charset Detect Stream Reader" />
   <property name="version" value="SNAPSHOT" />  <!-- Change to YYYYMMDD format for release. -->
   <property name="main-class" value="" />
-  <property name="class-path" value="icu4j.jar" />
+  <property name="class-path" value="jsoup.jar icu4j.jar" />
   <property name="dist-copy-bin" value="README.TXT LICENSE.TXT" />
   <property name="dist-copy-src" value="README.TXT LICENSE.TXT BUILD.TXT" />
   <property name="ant-version" value="1.7" />

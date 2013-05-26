@@ -27,9 +27,9 @@ import com.ibm.icu.text.CharsetMatch;
  * An input byte stream character encoding detector that uses the
  * <a href="http://icu-project.org/">International Components for Unicode for
  * Java (ICU4J)</a> package. The ICU4J package contains the
- * <code>CharsetDetector</code> class, which contains heuristics that can
+ * {@code CharsetDetector} class, which contains heuristics that can
  * detect a most likely character encoding for the byte stream. This detector is
- * not guranteed to always detect the correct encoding.
+ * not guaranteed to always detect the correct encoding.
  *
  * @author Tan Yee Fan
  */

@@ -43,10 +43,10 @@ public abstract class StreamCharsetDetector {
 
 	/**
 	 * Detects a possible character encoding of the given input byte stream.
-	 * The byte stream must support the <code>mark</code> and
-	 * <code>reset</code> methods.
+	 * The byte stream must support the {@code mark} and {@code reset}
+	 * methods.
 	 *
-	 * @return The detected encoding, or <code>null</code> if no encoding is
+	 * @return The detected encoding, or {@code null} if no encoding is
 	 *         detected.
 	 * @throws IOException If an I/O error occurs.
 	 */
@@ -57,10 +57,10 @@ public abstract class StreamCharsetDetector {
 	/**
 	 * Detects a possible character encoding of the given input byte stream,
 	 * with the belief that it is more likely to be of a particular
-	 * encoding. The byte stream must support the <code>mark</code> and
-	 * <code>reset</code> methods.
+	 * encoding. The byte stream must support the {@code mark} and
+	 * {@code reset} methods.
 	 *
-	 * @return The detected encoding, or <code>null</code> if no encoding is
+	 * @return The detected encoding, or {@code null} if no encoding is
 	 *         detected.
 	 * @throws IOException If an I/O error occurs.
 	 */
@@ -82,7 +82,7 @@ public abstract class StreamCharsetDetector {
 	 * Decodes a byte stream into a character string using the specified
 	 * encoding. The decoding is performed as leniently as possible, with
 	 * bytes that cannot be decoded replaced by special characters. If the
-	 * decoding cannot be performed, <code>null</code> is returned. 
+	 * decoding cannot be performed, {@code null} is returned.
 	 */
 	protected String decode(byte[] bytes, int offset, int length, String encoding) {
 		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes, offset, length);

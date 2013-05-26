@@ -25,7 +25,7 @@ import java.io.IOException;
  * An input byte stream character encoding detector for the 7-bit US-ASCII
  * encoding. The detection is performed by reading in a small amount of data
  * from the beginning of the byte stream. The detection is exact for the data
- * that is read in, but may be errorneous if the remainder of byte stream
+ * that is read in, but may be erroneous if the remainder of byte stream
  * contains non-ASCII characters.
  *
  * @author Tan Yee Fan

@@ -29,53 +29,28 @@ import java.io.UnsupportedEncodingException;
 import java.nio.CharBuffer;
 
 /**
- * The charset detect stream reader is a Java <code>Reader</code> class that
- * takes in a byte stream (<code>InputStream</code>), automatically detects the
- * most likely character encoding of the byte stream, and turns it into a
- * character stream (<code>Reader</code>) using that encoding. If the detected
- * character encoding is UTF-8, UTF-16, or UTF-32, and contains a Unicode
- * byte-order mark (BOM), the BOM will be removed from the byte stream and not
- * appear in the character stream. The <code>CharsetDetectStreamReader</code>
- * class can be used in place of the <code>InputStreamReader</code> class
- * provided in the Java API.
+ * The charset detect stream reader is a Java {@code Reader} class that takes in
+ * a byte stream ({@code InputStream}), automatically detects the most likely
+ * character encoding of the byte stream, and turns it into a character stream
+ * ({@code Reader}) using that encoding. The {@code CharsetDetectStreamReader}
+ * class can be used in place of the {@code InputStreamReader} class provided in
+ * the Java API.
  * <p>
- * This class detects the most likely character encoding of the byte stream by
- * successively calling the following character enoding detectors in the order
- * as showm, until one of them is able to detect a character encoding. Each
- * detector reads in a small amount of data from the byte stream to perform the
- * detection.
- * <ol>
- * <li>The {@linkplain BOMStreamCharsetDetector BOM detector} attempts to detect
- * the BOM that uniquely identifies the UTF-8, UTF-16, or UTF-32 character
- * encodings.</li>
- * <li>The {@linkplain XMLStreamCharsetDetector XML detector} attempts to detect
- * the XML declaration <code>&lt;?xml ... ?&gt;</code>, which may contain a
- * character encoding.</li>
- * <li>The {@linkplain ASCIIStreamCharsetDetector ASCII detector} reads in a
- * small amount of data from the input byte stream, and checks that the bytes
- * read are all 7-bit US-ASCII characters.</li>
- * <li>The {@linkplain ICUStreamCharsetDetector ICU detector} uses the
- * <a href="http://icu-project.org/">International Components for Unicode for
- * Java (ICU4J)</a> package to detect the most likely character encoding.</li>
- * </ol>
- * The above algorithm for character encoding detection is by necessity a
- * heuristic and is not guranteed to always detect the correct encoding.
+ * The default character encoding detector used is a
+ * {@linkplain SequentialCombinationCharsetDetector sequential combination of
+ * several other detectors}. If the {@linkplain BOMStreamCharsetDetector BOM
+ * detector} is applied and a Unicode byte-order mark (BOM) is found, then it is
+ * removed from the byte stream and not appear in the character stream. Removing
+ * the BOM from the byte stream also overcomes a
+ * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058">bug in
+ * Java</a> that was closed with a &quot;Will Not Fix&quot;.
  * <p>
- * This class is written partially in response to Sun Java developers closing
- * <a href="http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058">bug
- * report 4508058</a> with a &quot;Will Not Fix&quot;.
+ * Please note that character encoding detection is by necessity a heuristic and
+ * is not guaranteed to always detect the correct encoding.
  *
  * @author Tan Yee Fan
  */
 public class CharsetDetectStreamReader extends Reader {
-	/** The input byte stream character encoding detectors. */
-	private static final StreamCharsetDetector[] DETECTORS = {
-	  new BOMStreamCharsetDetector(),
-	  new XMLStreamCharsetDetector(),
-	  new ASCIIStreamCharsetDetector(),
-	  new ICUStreamCharsetDetector()
-	};
-
 	/** The character stream. */
 	private InputStreamReader reader;
 
@@ -90,19 +65,46 @@ public class CharsetDetectStreamReader extends Reader {
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(String fileName) throws IOException {
-		this(new FileInputStream(fileName), null);
+		this(new FileInputStream(fileName), null, null);
 	}
 
 	/**
-	 * Creates a new character stream from the given file, with the belief
-	 * that it is more likely to be of a particular encoding.
+	 * Creates a new character stream from the given file. The specified
+	 * character encoding detector is used instead of the default detector.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(String fileName, StreamCharsetDetector detector) throws IOException {
+		this(new FileInputStream(fileName), detector, null);
+	}
+
+	/**
+	 * Creates a new character stream from the given file. The specified
+	 * character encoding is specified as being more likely for the given
+	 * file.
 	 *
 	 * @throws IOException If an I/O error occurs.
 	 * @throws UnsupportedEncodingException If the encoding cannot be
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(String fileName, String defaultEncoding) throws IOException {
-		this(new FileInputStream(fileName), defaultEncoding);
+		this(new FileInputStream(fileName), null, defaultEncoding);
+	}
+
+	/**
+	 * Creates a new character stream from the given file. The specified
+	 * character encoding detector is used instead of the default detector,
+	 * and the specified character encoding is specified as being more
+	 * likely for the given file.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(String fileName, StreamCharsetDetector detector, String defaultEncoding) throws IOException {
+		this(new FileInputStream(fileName), detector, defaultEncoding);
 	}
 
 	/**
@@ -113,19 +115,47 @@ public class CharsetDetectStreamReader extends Reader {
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(byte[] bytes) throws IOException {
-		this(new ByteArrayInputStream(bytes), null);
+		this(new ByteArrayInputStream(bytes), null, null);
 	}
 
 	/**
-	 * Creates a new character stream from the given byte array, with the
-	 * belief that it is more likely to be of a particular encoding.
+	 * Creates a new character stream from the given byte array. The
+	 * specified character encoding detector is used instead of the default
+	 * detector.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(byte[] bytes, StreamCharsetDetector detector) throws IOException {
+		this(new ByteArrayInputStream(bytes), detector, null);
+	}
+
+	/**
+	 * Creates a new character stream from the given byte array. The
+	 * specified character encoding is specified as being more likely for
+	 * the given byte array.
 	 *
 	 * @throws IOException If an I/O error occurs.
 	 * @throws UnsupportedEncodingException If the encoding cannot be
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(byte[] bytes, String defaultEncoding) throws IOException {
-		this(new ByteArrayInputStream(bytes), defaultEncoding);
+		this(new ByteArrayInputStream(bytes), null, defaultEncoding);
+	}
+
+	/**
+	 * Creates a new character stream from the given byte array. The
+	 * specified character encoding detector is used instead of the default
+	 * detector, and the specified character encoding is specified as being
+	 * more likely for the given byte array.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(byte[] bytes, StreamCharsetDetector detector, String defaultEncoding) throws IOException {
+		this(new ByteArrayInputStream(bytes), detector, defaultEncoding);
 	}
 
 	/**
@@ -136,27 +166,51 @@ public class CharsetDetectStreamReader extends Reader {
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(InputStream stream) throws IOException {
-		this(stream, null);
+		this(stream, null, null);
 	}
 
 	/**
-	 * Creates a new character stream from the given byte stream, with the
-	 * belief that it is more likely to be of a particular encoding.
+	 * Creates a new character stream from the given byte stream. The
+	 * specified character encoding detector is used instead of the default
+	 * detector.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(InputStream stream, StreamCharsetDetector detector) throws IOException {
+		this(stream, detector, null);
+	}
+
+	/**
+	 * Creates a new character stream from the given byte stream. The
+	 * specified character encoding is specified as being more likely for
+	 * the given byte stream.
 	 *
 	 * @throws IOException If an I/O error occurs.
 	 * @throws UnsupportedEncodingException If the encoding cannot be
 	 *         detected.
 	 */
 	public CharsetDetectStreamReader(InputStream stream, String defaultEncoding) throws IOException {
+		this(stream, null, defaultEncoding);
+	}
+
+	/**
+	 * Creates a new character stream from the given byte stream. The
+	 * specified character encoding is specified as being more likely for
+	 * the given byte stream.
+	 *
+	 * @throws IOException If an I/O error occurs.
+	 * @throws UnsupportedEncodingException If the encoding cannot be
+	 *         detected.
+	 */
+	public CharsetDetectStreamReader(InputStream stream, StreamCharsetDetector detector, String defaultEncoding) throws IOException {
 		super();
 		if (!stream.markSupported())
 			stream = new BufferedInputStream(stream);
-		this.encoding = null;
-		for (StreamCharsetDetector detector: DETECTORS) {
-			this.encoding = detector.detect(stream, defaultEncoding);
-			if (this.encoding != null)
-				break;
-		}
+		if (detector == null)
+			detector = new SequentialCombinationCharsetDetector();
+		this.encoding = detector.detect(stream, defaultEncoding);
 		if (this.encoding == null)
 			throw new UnsupportedEncodingException("The encoding of the input stream cannot be detected.");
 		this.reader = new InputStreamReader(stream, this.encoding);
@@ -240,11 +294,10 @@ public class CharsetDetectStreamReader extends Reader {
 
 	/**
 	 * Closes the stream and releases any system resources associated with
-	 * it. Once the stream has been closed, further <code>read()</code>,
-	 * <code>ready()</code>, <code>mark()</code>, <code>reset()</code>, or
-	 * <code>skip()</code> invocations will throw an
-	 * <code>IOException</code>. Closing a previously closed stream has no
-	 * effect.
+	 * it. Once the stream has been closed, further {@code read()},
+	 * {@code ready()}, {@code mark()}, {@code reset()}, or {@code skip()}
+	 * invocations will throw an {@code IOException}. Closing a previously
+	 * closed stream has no effect.
 	 *
 	 * @throws IOException If an I/O error occurs.
 	 */

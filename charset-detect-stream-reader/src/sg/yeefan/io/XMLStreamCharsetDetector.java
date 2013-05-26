@@ -26,11 +26,11 @@ import java.util.regex.Pattern;
 /**
  * An input byte stream character encoding detector that uses the XML
  * declaration. XML documents may begin with a XML declaration of the form
- * <code>&lt;?xml ... ?&gt;</code>, which may also contain a character
- * encoding. The detection is exact if an XML declaration exists and the
- * encoding given in the XML declaration is correct. As a sanity check, the
- * extracted encoding is verified by checking whether the XML declaration can
- * be extracted using that encoding.
+ * {@code <?xml ... ?>}, which may also contain a character encoding. The
+ * detection is exact if an XML declaration exists and the encoding given in the
+ * XML declaration is correct. As a sanity check, the extracted encoding is
+ * verified by checking whether the XML declaration can be extracted using that
+ * encoding.
  *
  * @author Tan Yee Fan
  */
@@ -72,7 +72,7 @@ public class XMLStreamCharsetDetector extends StreamCharsetDetector {
 
 	/**
 	 * Extracts the XML declaration from the given string. If it cannot be
-	 * extracted, then <code>null</code> is returned.
+	 * extracted, then {@code null} is returned.
 	 */
 	private String extractXMLDeclaration(String string) {
 		int pos;
