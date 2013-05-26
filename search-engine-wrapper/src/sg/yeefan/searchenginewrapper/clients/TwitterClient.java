@@ -21,22 +21,19 @@ package sg.yeefan.searchenginewrapper.clients;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.ByteArrayOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import oauth.signpost.OAuthConsumer;
 import oauth.signpost.basic.DefaultOAuthConsumer;
-import oauth.signpost.exception.OAuthCommunicationException;
-import oauth.signpost.exception.OAuthExpectationFailedException;
-import oauth.signpost.exception.OAuthMessageSignerException;
+import oauth.signpost.exception.OAuthException;
 import org.apache.commons.lang3.StringEscapeUtils;
+import sg.yeefan.filedownloader.ConnectionHandler;
+import sg.yeefan.filedownloader.FileDownloader;
+import sg.yeefan.filedownloader.FileDownloaderException;
 import sg.yeefan.searchenginewrapper.KeyedSearchEngineClient;
 import sg.yeefan.searchenginewrapper.SearchEngineException;
 import sg.yeefan.searchenginewrapper.SearchEngineFatalException;
@@ -148,11 +145,13 @@ public class TwitterClient implements KeyedSearchEngineClient {
 		private User user;
 		private String text;
 		private long id;
+		private Status retweetedStatus;
 
 		public Status() {
 			this.user = new User();
 			this.text = "";
 			this.id = 0L;
+			this.retweetedStatus = null;
 		}
 
 		public User getUser() {
@@ -181,6 +180,17 @@ public class TwitterClient implements KeyedSearchEngineClient {
 
 		public void setId(long id) {
 			this.id = id;
+		}
+
+		@JsonProperty("retweeted_status")
+		public Status getRetweetedStatus() {
+			return this.retweetedStatus;
+		}
+
+		@JsonProperty("retweeted_status")
+		public void setRetweetedStatus(Status retweetedStatus) {
+			// Do not change the value to non-null if it is null.
+			this.retweetedStatus = retweetedStatus;
 		}
 	}
 
@@ -236,28 +246,74 @@ public class TwitterClient implements KeyedSearchEngineClient {
 	}
 
 	/**
-	 * Downloads the document from the given URL connection.
-	 *
-	 * @param connection URL connection.
+	 * File download connection handler for OAuth 1.0.
 	 */
-	private byte[] download(URLConnection connection) throws IOException {
-		connection.setConnectTimeout(10000);
-		connection.setReadTimeout(10000);
-		int length = connection.getContentLength();
-		if (length < 1024)
-			length = 1024;
-		InputStream inputStream = connection.getInputStream();
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream(length);
-		byte[] buffer = new byte[1024];
-		while (true) {
-			int numBytes = inputStream.read(buffer);
-			if (numBytes < 0)
-				break;
-			if (numBytes == 0)
-				continue;
-			outputStream.write(buffer, 0, numBytes);
+	private static class OAuthConnectionHandler implements ConnectionHandler {
+		private OAuthConsumer consumer;
+		private OAuthException exception;
+
+		public OAuthConnectionHandler(OAuthConsumer consumer) {
+			this.consumer = consumer;
 		}
-		return outputStream.toByteArray();
+	
+		public OAuthException getException() {
+			return this.exception;
+		}
+	
+		@Override
+		public boolean beforeConnect(FileDownloader downloader, URLConnection connection) {
+			boolean success = false;
+			try {
+				consumer.sign(connection);
+				success = true;
+			}
+			catch (OAuthException e) {
+				this.exception = e;
+			}
+			return success;
+		}
+
+		@Override
+		public boolean afterConnect(FileDownloader downloader, URLConnection connection) {
+			return true;
+		}
+	}
+
+	/**
+	 * Extracts the text from the status object.
+	 */
+	private String getStatusText(Status status) {
+		// We do special processing of text if the status is a retweet,
+		// because the text may be truncated. Truncated text may be
+		// determined by checking whether the text ends with an ellipsis
+		// (0x2026), optionally followed by an URL. In this case, we try
+		// to restore the untruncated text by reconstructing from the
+		// original tweet. But it is possible that the retweeted text
+		// also contains addtional user-added text, in which case we use
+		// the truncated text instead.
+		String text = status.getText();
+		Status rtStatus = status.getRetweetedStatus();
+		if (rtStatus != null && text.startsWith("RT ")) {
+			int ellipsisPos = text.lastIndexOf('\u2026');
+			if (ellipsisPos >= 0) {
+				String textFront = text.substring(0, ellipsisPos);
+				String textRemainder = text.substring(ellipsisPos + 1);
+				String pattern = " http://";
+				boolean patternMatch;
+				if (textRemainder.length() > pattern.length())
+					patternMatch = textRemainder.startsWith(pattern);
+				else
+					patternMatch = pattern.startsWith(textRemainder);
+				if (patternMatch) {
+					String rtUser = rtStatus.getUser().getScreenName();
+					String rtText = rtStatus.getText();
+					String reconstructedText = "RT @" + rtUser + ": " + rtText;
+					if (reconstructedText.startsWith(textFront))
+						text = reconstructedText;
+				}
+			}
+		}
+		return text;
 	}
 
 	/**
@@ -277,7 +333,7 @@ public class TwitterClient implements KeyedSearchEngineClient {
 		for (String line: lines) {
 			line = line.trim().replaceAll("\\s+", " ");
 			if (line.length() > 0)
-				list.add(snippet);
+				list.add(line);
 		}
 		String[] result = new String[list.size()];
 		list.toArray(result);
@@ -299,60 +355,36 @@ public class TwitterClient implements KeyedSearchEngineClient {
 		String tokenKey = keyStrings[2];
 		String tokenSecret = keyStrings[3];
 		long startTime = System.currentTimeMillis();
-		URLConnection connection = null;
-		InputStream inputStream = null;
+		OAuthConsumer consumer = new DefaultOAuthConsumer(consumerKey, consumerSecret);
+		consumer.setTokenWithSecret(tokenKey, tokenSecret);
+		OAuthConnectionHandler connectionHandler = new OAuthConnectionHandler(consumer);
+		FileDownloader downloader = new FileDownloader();
 		String jsonString = null;
 		try {
-			OAuthConsumer consumer = new DefaultOAuthConsumer(consumerKey, consumerSecret);
-			consumer.setTokenWithSecret(tokenKey, tokenSecret);
-			URL url = new URL(query.getUrl());
-			connection = url.openConnection();
-			connection.setRequestProperty("User-Agent", "Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
-			consumer.sign(connection);
-			byte[] bytes = download(connection);
+			downloader.setUserAgent("Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
+			downloader.setConnectionHandler(connectionHandler);
+			String requestUrl = query.getUrl();
+			byte[] bytes = downloader.download(requestUrl);
 			jsonString = new String(bytes, "UTF-8");
 		}
-		catch (OAuthMessageSignerException e) {
-			throw new SearchEngineFatalException(e);
-		}
-		catch (OAuthExpectationFailedException e) {
-			throw new SearchEngineFatalException(e);
-		}
-		catch (OAuthCommunicationException e) {
-			throw new SearchEngineFatalException(e);
-		}
-		catch (IOException e) {
-			if (connection != null) {
-				if (connection instanceof HttpURLConnection) {
-					HttpURLConnection http = (HttpURLConnection)connection;
-					try {
-						int code = http.getResponseCode();
-						if (code == 429)
-							throw new SearchEngineQuotaException(e);
-						if (code % 100 == 4)
-							throw new SearchEngineFatalException(e);
-						throw new SearchEngineException(e);
-					}
-					catch (IOException ioe) {
-						throw new SearchEngineException(e);
-					}
-				}
-				else {
-					throw new SearchEngineException(e);
-				}
+		catch (FileDownloaderException e) {
+			if (e.getReason() == FileDownloaderException.Reason.DOWNLOAD_ABORTED) {
+				OAuthException exception = connectionHandler.getException();
+				if (exception != null)
+					throw new SearchEngineFatalException(exception);
+				throw new SearchEngineException(e);
 			}
 			else {
+				int code = downloader.getResponseCode();
+				if (code == 429)
+					throw new SearchEngineQuotaException(e);
+				if (code % 100 == 4)
+					throw new SearchEngineFatalException(e);
 				throw new SearchEngineException(e);
 			}
 		}
-		finally {
-			if (inputStream != null) {
-				try {
-					inputStream.close();
-				}
-				catch (IOException e) {
-				}
-			}
+		catch (UnsupportedEncodingException e) {
+			throw new SearchEngineException(e);
 		}
 		long endTime = System.currentTimeMillis();
 		Response response = null;
@@ -373,9 +405,9 @@ public class TwitterClient implements KeyedSearchEngineClient {
 		SearchEngineResult[] resultArray = new SearchEngineResult[items.length];
 		for (int i = 0; i < items.length; i++) {
 			User user = items[i].getUser();
-			String url = "https://twitter.com/" + items[i].getUser().getName().trim() + "/status/" + items[i].getId();
-			String title = processTitle(user.getScreenName().trim() + " (" + user.getName().trim() + ")");
-			String snippet = items[i].getText();
+			String url = "https://twitter.com/" + items[i].getUser().getScreenName().trim() + "/status/" + items[i].getId();
+			String title = processTitle(user.getName().trim() + " (" + user.getScreenName().trim() + ")");
+			String snippet = getStatusText(items[i]);  // Use this instead of items[i].getText().
 			resultArray[i] = new SearchEngineResult();
 			resultArray[i].setURL(url);
 			resultArray[i].setTitle(title);

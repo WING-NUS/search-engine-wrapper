@@ -200,7 +200,7 @@ public class GoogleCustomClient implements KeyedSearchEngineClient {
 		FileDownloader downloader = new FileDownloader();
 		String jsonString = null;
 		try {
-			downloader.setRequestProperty("User-Agent", "Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
+			downloader.setUserAgent("Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
 			String requestUrl = "https://www.googleapis.com/customsearch/v1?key=" + encodedApiKey +
 			  "&cx=" + encodedCx +
 			  "&q=" + encodedQuery +

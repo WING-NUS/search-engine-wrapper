@@ -114,28 +114,31 @@ Usage of the search engines are governed by the respective license agreements of
 these search engines.
 
 The third-party components included in this distribution are as follows:
-1. File Downloader 20130423 (file-downloader.jar)
+1. File Downloader 20130527 (file-downloader.jar)
    URL: http://wing.comp.nus.edu.sg/~tanyeefa/downloads/filedownloader/
    License: Apache License (Version 2.0)
-2. Charset Detect Stream Reader 20130423 (charset-detect-stream-reader.jar)
+2. Charset Detect Stream Reader 20130527 (charset-detect-stream-reader.jar)
    URL: http://wing.comp.nus.edu.sg/~tanyeefa/downloads/charsetdetectstreamreader/
    License: Apache License (Version 2.0)
-3. Jackson JSON Processor 2.1.4 (jackson-core.jar, jackson-annotations.jar, jackson-databind.jar)
+3. Jackson JSON Processor 2.2.0 (jackson-core.jar, jackson-annotations.jar, jackson-databind.jar)
    URL: http://wiki.fasterxml.com/JacksonHome
    License: Apache License (Version 2.0)
-4. International Components for Unicode for Java 51.1 (icu4j.jar)
+4. jsoup 1.7.2 (jsoup.jar)
+   URL: http://jsoup.org/
+   License: MIT License
+5. International Components for Unicode for Java 51.2 (icu4j.jar)
    URL: http://icu-project.org/
    License: ICU License
-5. OAuth Signpost 1.2.1.2 (signpost-core.jar)
+6. OAuth Signpost 1.2.1.2 (signpost-core.jar)
    URL: http://code.google.com/p/oauth-signpost/
    License: Apache License (Version 2.0)
-6. Apache Commons Codec 1.7 (commons-codec.jar)
+7. Apache Commons Codec 1.8 (commons-codec.jar)
    URL: http://commons.apache.org/proper/commons-codec/
    License: Apache License (Version 2.0)
-7. Apache Commons Lang 3.1 (commons-lang3.jar)
+8. Apache Commons Lang 3.1 (commons-lang3.jar)
    URL: http://commons.apache.org/proper/commons-lang/
    License: Apache License (Version 2.0)
-8. Base64 Public Domain Encoder/Decoder 2.3.7
+9. Base64 Public Domain Encoder/Decoder 2.3.7
    URL: http://iharder.net/base64/
    License: Public Domain
 

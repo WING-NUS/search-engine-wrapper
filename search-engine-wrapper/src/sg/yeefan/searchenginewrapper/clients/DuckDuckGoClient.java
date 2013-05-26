@@ -199,7 +199,7 @@ public class DuckDuckGoClient implements SearchEngineClient {
 
 		@JsonProperty("Topics")
 		public Result[] getTopics() {
-			return topics;
+			return this.topics;
 		}
 
 		@JsonProperty("Topics")
@@ -335,7 +335,7 @@ public class DuckDuckGoClient implements SearchEngineClient {
 		FileDownloader downloader = new FileDownloader();
 		String jsonString = null;
 		try {
-			downloader.setRequestProperty("User-Agent", "Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
+			downloader.setUserAgent("Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
 			String requestUrl = "http://api.duckduckgo.com/?q=" + encodedQuery + "&format=json&no_html=1";
 			byte[] bytes = downloader.download(requestUrl);
 			jsonString = new String(bytes, "UTF-8");

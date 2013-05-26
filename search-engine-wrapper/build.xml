@@ -3,7 +3,7 @@
   <property name="title" value="Search Engine Wrapper" />
   <property name="version" value="SNAPSHOT" />  <!-- Change to YYYYMMDD format for release. -->
   <property name="main-class" value="sg.yeefan.searchenginewrapper.SearchEngineWrapperMain" />
-  <property name="class-path" value="file-downloader.jar charset-detect-stream-reader.jar icu4j.jar jackson-core.jar jackson-annotations.jar jackson-databind.jar signpost-core.jar commons-codec.jar commons-lang3.jar" />
+  <property name="class-path" value="file-downloader.jar charset-detect-stream-reader.jar jsoup.jar icu4j.jar jackson-core.jar jackson-annotations.jar jackson-databind.jar signpost-core.jar commons-codec.jar commons-lang3.jar" />
   <property name="dist-copy-bin" value="README.TXT NOTICE.TXT LICENSE.TXT" />
   <property name="dist-copy-src" value="README.TXT NOTICE.TXT LICENSE.TXT BUILD.TXT" />
   <property name="ant-version" value="1.7" />

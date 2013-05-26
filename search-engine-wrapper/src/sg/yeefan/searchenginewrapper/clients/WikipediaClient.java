@@ -104,7 +104,7 @@ public class WikipediaClient implements SearchEngineClient {
 
 		@JsonProperty("query-continue")
 		public QueryContinue getQueryContinue() {
-			return queryContinue;
+			return this.queryContinue;
 		}
 
 		@JsonProperty("query-continue")
@@ -249,7 +249,7 @@ public class WikipediaClient implements SearchEngineClient {
 		FileDownloader downloader = new FileDownloader();
 		String jsonString = null;
 		try {
-			downloader.setRequestProperty("User-Agent", "Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
+			downloader.setUserAgent("Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
 			String requestUrl = "http://" + this.host + "/w/api.php?action=query&list=search&srsearch=" + encodedQuery +
 			  "&srinfo=totalhits&srprop=snippet&sroffset=" + (startIndex - 1) + "&srlimit=50&format=json";
 			byte[] bytes = downloader.download(requestUrl);

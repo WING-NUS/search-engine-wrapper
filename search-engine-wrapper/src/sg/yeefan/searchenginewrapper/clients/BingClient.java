@@ -115,7 +115,7 @@ public class BingClient implements KeyedSearchEngineClient {
 
 		@JsonProperty("Web")
 		public Web[] getWeb() {
-			return web;
+			return this.web;
 		}
 
 		@JsonProperty("Web")
@@ -151,7 +151,7 @@ public class BingClient implements KeyedSearchEngineClient {
 
 		@JsonProperty("Description")
 		public String getDescription() {
-			return description;
+			return this.description;
 		}
 
 		@JsonProperty("Description")
@@ -163,7 +163,7 @@ public class BingClient implements KeyedSearchEngineClient {
 
 		@JsonProperty("Url")
 		public String getUrl() {
-			return url;
+			return this.url;
 		}
 
 		@JsonProperty("Url")
@@ -211,10 +211,8 @@ public class BingClient implements KeyedSearchEngineClient {
 		if (startIndex < 1)
 			throw new SearchEngineFatalException("Start index must be at least 1.");
 		String encodedQuery = null;
-		String authenticationString = null;
 		try {
 			encodedQuery = URLEncoder.encode("'" + queryString + "'", "UTF-8");
-			authenticationString = Base64.encodeBytes((key + ":" + key).getBytes("US-ASCII"));
 		}
 		catch (UnsupportedEncodingException e) {
 			throw new SearchEngineFatalException(e);
@@ -223,8 +221,9 @@ public class BingClient implements KeyedSearchEngineClient {
 		FileDownloader downloader = new FileDownloader();
 		String jsonString = null;
 		try {
-			downloader.setRequestProperty("User-Agent", "Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
-			downloader.setRequestProperty("Authorization", "Basic " + authenticationString);
+			downloader.setUserAgent("Search Engine Wrapper (http://wing.comp.nus.edu.sg/~tanyeefa/downloads/searchenginewrapper/)");
+			downloader.setUsername(key);
+			downloader.setPassword(key);
 			String requestUrl = "https://api.datamarket.azure.com/Bing/SearchWeb/Composite?$format=json&$skip=" + (startIndex - 1) +
 			  "&Query=" + encodedQuery;
 			byte[] bytes = downloader.download(requestUrl);
