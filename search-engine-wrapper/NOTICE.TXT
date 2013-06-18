@@ -36,7 +36,7 @@ through two new classes ResultsXMLReader and ResultsXMLWriter, and backwards
 compatibility is maintained with the legacy SearchEngineResultsXML class such
 that the output of SearchEngineResultsXML is readable by ResultsXMLReader and
 the output of ResultsXMLWriter is readable by SearchEngineResultsXML. Note that
-the legacy SearchEngineResultsXML class is now deprecated.
+the legacy SearchEngineResultsXML class is now removed.
 
 Starting from the release of 2009 June 9, the search engine results output XML
 file will be saved using the UTF-8 character encoding. Releases prior to 2009
@@ -59,13 +59,5 @@ queries have successfully returned results. Users running this program in the
 background are advised to periodically check the standard output and error
 output in case the failure is not caused by transient downtime such as temporary
 server issues or daily quota exceeded for a key.
-
-
-DETERMINING THE SEARCH ENGINE WRAPPER VERSION
----------------------------------------------
-
-To determine the release of the search engine wrapper, see the VERSION.TXT file
-that came with the distribution. If the VERSION.TXT file cannot be found, then
-it is most likely that you have a release earlier than 2009 June 9.
 
 

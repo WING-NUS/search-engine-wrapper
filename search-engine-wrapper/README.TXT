@@ -21,13 +21,13 @@ an exponential backoff mechanism. Thirdly, for search engines that requires a
 key to function, the search engine wrapper can manage a pool of keys to be
 rotated.
 
-The following search engines are supported:
-1. Google Custom Search API (http://www.google.com/cse/)
-2. Bing Search API (http://www.bing.com/developers/)
-3. DuckDuckGo Search API (https://duckduckgo.com/api)
-4. Wikipedia Search API (http://www.mediawiki.org/wiki/API:Search)
-5. Twitter Search API (https://dev.twitter.com/)
-6. Facebook Search API (https://developers.facebook.com/)
+The following search engines APIs are supported:
+1. Google Custom Search (http://www.google.com/cse/)
+2. Bing Search (http://www.bing.com/developers/)
+3. DuckDuckGo Search (https://duckduckgo.com/api)
+4. Wikipedia Search (http://www.mediawiki.org/wiki/API:Search)
+5. Twitter Search (https://dev.twitter.com/)
+6. Facebook Search (https://developers.facebook.com/)
 
 
 IMPORTANT NOTICES
@@ -56,8 +56,10 @@ Some search engines require the use of a registration key. For such search
 engines, the <key-file> is required, which is a text file containing one key
 per line.
 
-For more information, please refer to the documentation for the
-SearchEngineWrapper class in the Javadocs.
+For more information, please refer to the SearchEngineWrapper class in the
+Javadocs. Documentation regarding the format of the registration key for a
+particular search engine client is also found in the Javadocs for the Java
+class that implements the client.
 
 
 SEARCH ENGINE RESULTS DOWNLOADER COMMAND LINE USAGE
@@ -101,7 +103,7 @@ Note that this API exposes more functionality than the corresponding command
 line programs.
 
 Users should note the potential issues when using the search engine wrapper,
-stated in a section below.
+given in NOTICE.TXT.
 
 
 LICENSE
