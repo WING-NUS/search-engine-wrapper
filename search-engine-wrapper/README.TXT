@@ -27,6 +27,7 @@ The following search engines are supported:
 3. DuckDuckGo Search API (https://duckduckgo.com/api)
 4. Wikipedia Search API (http://www.mediawiki.org/wiki/API:Search)
 5. Twitter Search API (https://dev.twitter.com/)
+6. Facebook Search API (https://developers.facebook.com/)
 
 
 IMPORTANT NOTICES
@@ -43,7 +44,7 @@ For querying a search engine, the command-line syntax is as follows:
       <input-file> <output-file> <num-results> [<key-file>]
 
 The <client> parameter is one of "google-custom", "bing", "duckduckgo",
-"wikipedia", and "twitter".
+"wikipedia", "twitter", and "facebook".
 
 The <input-file> is a text file that contains lines of the form:
     <label>: <query>

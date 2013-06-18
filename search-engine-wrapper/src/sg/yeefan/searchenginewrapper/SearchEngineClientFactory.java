@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import sg.yeefan.searchenginewrapper.clients.BingClient;
 import sg.yeefan.searchenginewrapper.clients.DuckDuckGoClient;
+import sg.yeefan.searchenginewrapper.clients.FacebookClient;
 import sg.yeefan.searchenginewrapper.clients.GoogleCustomClient;
 import sg.yeefan.searchenginewrapper.clients.TwitterClient;
 import sg.yeefan.searchenginewrapper.clients.WikipediaClient;
@@ -49,6 +50,7 @@ public class SearchEngineClientFactory {
 		CLIENT_MAP.put("duckduckgo", DuckDuckGoClient.class);
 		CLIENT_MAP.put("wikipedia", WikipediaClient.class);
 		CLIENT_MAP.put("twitter", TwitterClient.class);
+		CLIENT_MAP.put("facebook", FacebookClient.class);
 	}
 
 	/**
